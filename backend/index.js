@@ -1,12 +1,11 @@
 import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
-import connectDB from "./config/DB.js"; // Adjust the path as necessary
+import connectDB from "./config/db.js"; // Adjust the path as necessary
 import authRouter from "./routes/auth.routes.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import userRouter from "./routes/user.routes.js";
-import geminiResponse from "./gemini.js";
 
 const app = express();
 app.use(
@@ -24,7 +23,6 @@ app.use(cookieParser());
 app.use("/api/auth", authRouter);
 
 app.use("/api/user", userRouter); // Assuming you want to use the same router for user-related routes
-
 
 app.listen(PORT, () => {
   connectDB();
