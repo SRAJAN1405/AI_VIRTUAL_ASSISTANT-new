@@ -13,11 +13,11 @@ function UserContext({ children }) {
 
   const handleUserData = async () => {
     try {
-      console.log("Fetching userData, current userData:", userData);
+      // console.log("Fetching userData, current userData:", userData);
       const result = await axios.get(`${serverUrl}/api/user/current`, {
         withCredentials: true,
       });
-      console.log("result data", result.data);
+      // console.log("result data", result.data);
       setUserData(result?.data);
     } catch (error) {
       console.error("Error fetching userData:", error);
