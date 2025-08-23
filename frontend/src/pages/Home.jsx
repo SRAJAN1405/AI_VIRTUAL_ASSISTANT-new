@@ -438,7 +438,7 @@ const Home = () => {
         className="md:block lg:hidden text-white absolute top-5 right-5 w-6 h-6 cursor-pointer"
         onClick={() => setHam(true)}
       />
-      /* Sidebar for sm and md */
+      {/* Sidebar for sm and md */}
       <div
         className={`fixed inset-y-0 right-0 w-64 bg-[#00000080] backdrop-blur-lg p-5 flex flex-col gap-6 transform transition-transform duration-300 ease-in-out lg:hidden ${
           ham ? "translate-x-0" : "translate-x-full"
