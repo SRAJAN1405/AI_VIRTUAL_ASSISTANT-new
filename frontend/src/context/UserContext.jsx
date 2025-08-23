@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 export const UserDataContext = React.createContext();
 
 function UserContext({ children }) {
-  const serverUrl = "https://ai-virtual-assistant-new.onrender.com";
+  const serverUrl = "http://localhost:8000";
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true); // Add loading state
   const [frontendImage, setFrontendImage] = useState(null);
@@ -13,11 +13,11 @@ function UserContext({ children }) {
 
   const handleUserData = async () => {
     try {
-      // console.log("Fetching userData, current userData:", userData);
+      console.log("Fetching userData, current userData:", userData);
       const result = await axios.get(`${serverUrl}/api/user/current`, {
         withCredentials: true,
       });
-      // console.log("result data", result.data);
+      console.log("result data", result.data);
       setUserData(result?.data);
     } catch (error) {
       console.error("Error fetching userData:", error);
