@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 export const UserDataContext = React.createContext();
 
 function UserContext({ children }) {
-  const serverUrl = "https://ai-virtual-assistant-new.onrender.com";
+  const serverUrl = "https://ai-virtual-assistant-im12.onrender.com";
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true); // Add loading state
   const [frontendImage, setFrontendImage] = useState(null);
