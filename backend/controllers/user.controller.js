@@ -1,7 +1,7 @@
-import User from "../models/user.model.js";
-import uploadOnCloudinary from "./../config/cloudinary.js";
-import geminiResponse from "../gemini.js";
 import moment from "moment";
+import User from "../models/user.model.js";
+import uploadOnCloudinary from "../config/cloudinary.js";
+import geminiResponse from "../gemini.js";
 export const getCurrentUser = async (req, res) => {
   try {
     const userId = req.userId;
@@ -51,49 +51,94 @@ export const updateAssistant = async (req, res) => {
 export const askToAssistant = async (req, res) => {
   try {
     const { promptUser } = req.body;
-    if (!promptUser) {
-      return res.status(400).json({ message: "Prompt is required" });
-    }
-    const user = await User.findById(req.userId).select("-password");
-    user.history.push(promptUser);
-    await user.save();
-    const userName = user.name;
-    const assistantName = user.assistantName;
-    const result = await geminiResponse(promptUser, assistantName, userName);
-    const jsonMatch = result.match(/{[\s\S]*}/);
-    if (!jsonMatch) {
+
+    if (!promptUser?.trim()) {
       return res.status(400).json({
-        response: "Sorry, I didn't understand that. Can you please rephrase?",
+        message: "Prompt is required",
       });
     }
-    const gemResult = JSON.parse(jsonMatch[0]);
-    const type = gemResult.type;
+
+    const user = await User.findById(req.userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    user.history.push(promptUser);
+    await user.save();
+
+    const result = await geminiResponse(
+      promptUser,
+      user.assistantName,
+      user.name
+    );
+
+    if (!result) {
+      return res.status(500).json({
+        response: "No response from Gemini.",
+      });
+    }
+
+    let gemResult;
+
+    try {
+      // If Gemini returns pure JSON
+      gemResult = JSON.parse(result);
+    } catch {
+      // If Gemini returns ```json ... ```
+      const jsonMatch = result.match(/\{[\s\S]*\}/);
+
+      if (!jsonMatch) {
+        return res.status(400).json({
+          response:
+            "Sorry, I didn't understand that. Please try again.",
+        });
+      }
+
+      gemResult = JSON.parse(jsonMatch[0]);
+    }
+
+    const { type, userInput, response } = gemResult;
+
     switch (type) {
       case "get-date":
         return res.json({
           type,
-          userInput: gemResult.userInput,
-          response: `current date is ${moment().format("YYYY-MM-DD ")}`,
+          userInput,
+          response: `Current date is ${moment().format(
+            "YYYY-MM-DD"
+          )}`,
         });
+
       case "get-time":
         return res.json({
           type,
-          userInput: gemResult.userInput,
-          response: `current time is ${moment().format("hh:mm A")}`,
+          userInput,
+          response: `Current time is ${moment().format(
+            "hh:mm A"
+          )}`,
         });
 
       case "get-day":
         return res.json({
           type,
-          userInput: gemResult.userInput,
-          response: `current time is ${moment().format("dddd")}`,
+          userInput,
+          response: `Today is ${moment().format(
+            "dddd"
+          )}`,
         });
+
       case "get-month":
         return res.json({
           type,
-          userInput: gemResult.userInput,
-          response: `current time is ${moment().format("MMMM")}`,
+          userInput,
+          response: `Current month is ${moment().format(
+            "MMMM"
+          )}`,
         });
+
       case "google-search":
       case "youtube-search":
       case "youtube-play":
@@ -104,18 +149,31 @@ export const askToAssistant = async (req, res) => {
       case "weather-show":
         return res.json({
           type,
-          userInput: gemResult.userInput,
-          response: gemResult.response,
+          userInput,
+          response,
         });
+
       default:
-        return res.status(400).json({
-          response: "Sorry, I didn't understand that. Can you please rephrase?",
+        return res.json({
+          type: "general",
+          userInput: promptUser,
+          response:
+            response ||
+            "Sorry, I didn't understand that.",
         });
     }
   } catch (error) {
     console.error("Error in askToAssistant:", error);
+
+    if (error.status === 429 || error.code === 429) {
+      return res.status(429).json({
+        response:
+          "Gemini rate limit exceeded. Please try again later.",
+      });
+    }
+
     return res.status(500).json({
-      message: "Error processing your request",
+      response: "Something went wrong.",
       error: error.message,
     });
   }
